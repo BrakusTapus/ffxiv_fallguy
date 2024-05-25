@@ -2,6 +2,9 @@
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using ECommons;
+using ECommons.DalamudServices;
+using ECommons.ImGuiMethods;
 
 namespace vfallguy;
 
@@ -14,6 +17,8 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] public static IChatGui? Chat { get; private set; }
     public Plugin(DalamudPluginInterface dalamud)
     {
+        ECommonsMain.Init(dalamud, this, ECommons.Module.DalamudReflector, ECommons.Module.ObjectFunctions, ECommons.Module.ObjectLife);
+
         dalamud.Create<Service>();
 
         _wnd = new();
@@ -27,9 +32,9 @@ public sealed class Plugin : IDalamudPlugin
 
         if (Dalamud.Reason == PluginLoadReason.Reload)
         {
-            Chat.Print($"Reloaded {Dalamud.InternalName.ToString()}", Dalamud.InternalName, 45);
+            Svc.Chat.Print($"Reloaded {Dalamud.InternalName.ToString()}", Dalamud.InternalName, 45);
             _wnd.IsOpen = !_wnd.IsOpen;
-            Notify.Success(EasyCombatPlugin.Name + $"has succesfully reloaded!");
+            Notify.Success(Dalamud.InternalName.ToString() + $"has succesfully reloaded!");
         }
     }
 
@@ -38,5 +43,6 @@ public sealed class Plugin : IDalamudPlugin
         MiniHacks.Dispose();
         WindowSystem.RemoveAllWindows();
         _wnd.Dispose();
+        ECommonsMain.Dispose();
     }
 }
