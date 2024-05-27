@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using Dalamud;
 using Dalamud.Hooking;
+using ECommons.DalamudServices;
 
 namespace vfallguy;
 
@@ -17,7 +18,7 @@ public unsafe class MiniHacks
     private static Hook<NoMoveDelegate>? antiKickHook;
     public static bool EnableAntiKick = false;
     private static long AntiKickFunc(long gameobj, float rot, float length, long a4, char a5, int a6)
-    {            
+    {
         if (EnableAntiKick)
             length = 0.0f;
         return antiKickHook.Original(gameobj, rot, length, a4, a5, a6);
@@ -25,14 +26,19 @@ public unsafe class MiniHacks
 
     internal static void SetAntiKick(bool isenable)
     {
+        if (antiKickHook == null)
+        {
+             Service.ChatGui.Print($"antiKickHook is null!");
+        }
         if (isenable)
         {
-            antiKickHook.Enable();
+            antiKickHook?.Enable();
         }
         else
         {
-            antiKickHook.Disable();
+            antiKickHook?.Disable();
         }
+
     }
 
 
@@ -59,7 +65,7 @@ public unsafe class MiniHacks
         antiKickHook?.Disable();
         EnableAntiKick = false;
     }
-    
+
     private static Lazy<IntPtr> GetSpeedPtr = new(() =>
     {
         return Service.SigScanner.TryScanText(
@@ -68,13 +74,13 @@ public unsafe class MiniHacks
             ? num
             : IntPtr.Zero;
     });
-    
+
     private delegate IntPtr SetSpeedDelegate(byte i);
-    
-    internal static void MoveSpeed(float speedBase)
+    internal unsafe static void MoveSpeed(float speedBase)
     {
-       Service.ChatGui.Print($"Current move speed is {speedBase}x");
-        speedBase *= 6f;
+        Service.ChatGui.Print($"Current move speed is {speedBase:F3}x\nIn game speed is {speedBase*6}");
+        
+                speedBase *= 6f;
         SafeMemory.Write(
             GetSpeedPtr.Value + new IntPtr(4) + Marshal.ReadInt32(GetSpeedPtr.Value + new IntPtr(4)) +
             new IntPtr(4) + new IntPtr(20),
@@ -82,7 +88,7 @@ public unsafe class MiniHacks
         SetMoveControlData(speedBase);
     }
     private static void SetMoveControlData(float speed) => SafeMemory.Write(setSpeed(1) + new IntPtr(8), speed);
-    
+
     private static IntPtr SetSpeedFunPtr
     {
         get
@@ -96,5 +102,5 @@ public unsafe class MiniHacks
 
     private static SetSpeedDelegate setSpeed =
         (SetSpeedDelegate)Marshal.GetDelegateForFunctionPointer(SetSpeedFunPtr, typeof(SetSpeedDelegate));
-    
+
 }

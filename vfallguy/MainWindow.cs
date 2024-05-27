@@ -1,12 +1,13 @@
 ﻿using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
+using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using ImGuiNET;
 using System;
 using System.Linq;
 using System.Numerics;
-using Dalamud.Interface.Colors;
+using vfallguy.Helpers;
 
 namespace vfallguy;
 
@@ -33,6 +34,9 @@ public class MainWindow : Window, IDisposable
     private float _hackMoveSpeed = 1;
     private int _autoLeaveLimit = 1;
     private bool _enableHacks = false;
+    private readonly float step = 0.001f;
+    private readonly float stepFast = 0.010f;
+    private unsafe readonly Structs.PlayerController* playerController = (Structs.PlayerController*)Svc.SigScanner.GetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 3C 01 75 1E 48 8D 0D");
 
     public MainWindow() : base("vfailguy with MiniHacks")
     {
@@ -59,7 +63,7 @@ public class MainWindow : Window, IDisposable
         _movementSpeed = _movementDirection.Length() / Framework.Instance()->FrameDeltaTime;
         _movementDirection = _movementDirection.NormalizedXZ();
 
-        IsOpen = Service.ClientState.TerritoryType is 1165 or 1197;
+        IsOpen = Service.ClientState.TerritoryType is 1165 or 1197 or 341;
         if (!IsOpen && _enableHacks)
         {
             MiniHacks.Disable();
@@ -112,7 +116,7 @@ public class MainWindow : Window, IDisposable
                     ImGui.SliderInt("Limit", ref _autoLeaveLimit, 1, 23);
                 }
             }
-
+            ImGui.Separator();
             ImGui.Checkbox("Show AOE zones", ref _showAOEs);
             ImGui.Checkbox("Show AOE debug text", ref _showAOEText);
             ImGui.Checkbox("Show proposed path", ref _showPathfind);
@@ -134,25 +138,75 @@ public class MainWindow : Window, IDisposable
             //}
         }
 
-        if (ImGui.CollapsingHeader("Panty Functions (Do not use in multiplayer, proceed at your own risk!)"))
+        if (ImGui.CollapsingHeader("Hacks (Do not use in multiplayer, proceed at your own risk!)"))
         {
-            if (ImGui.InputFloat("Movement Speed Setting", ref _hackMoveSpeed))
+            // Base Movement speed is 6
+            // Refferene: Sprint increases movement speed to 7.8 (+130%)
+
+            ImGui.TextColored(EasyColor.PinkLight, $"Current Movement Speed: {playerController->MoveControllerWalk.BaseMovementSpeed:F3}");
+
+            ImGui.SetNextItemWidth(150);
+            if (ImGui.InputFloat(" Multiplier", ref _hackMoveSpeed, step, stepFast, "%.3f", ImGuiInputTextFlags.None))
             {
                 if (_hackMoveSpeed > 5) _hackMoveSpeed = 5;
             }
-
-            if (ImGui.Button("Apply Movement Speed Setting"))
+            ImGui.SameLine();
+            if (ImGui.Button("Set"))
             {
                 MiniHacks.MoveSpeed(_hackMoveSpeed);
             }
-
             ImGui.SameLine();
-            if (ImGui.Button("Reset Movement Speed"))
+            if (ImGui.Button("Reset"))
             {
                 _hackMoveSpeed = 1;
                 MiniHacks.MoveSpeed(_hackMoveSpeed);
             }
 
+            ImGui.TextWrapped($"Game Movement Speed: {_hackMoveSpeed * 6:F3}");
+
+            if (ImGui.Button("+1%"))
+            {
+                _hackMoveSpeed += _hackMoveSpeed * 0.01f;
+                MiniHacks.MoveSpeed(_hackMoveSpeed);
+            }
+
+            ImGui.SameLine();
+            if (ImGui.Button("+5%"))
+            {
+                _hackMoveSpeed += _hackMoveSpeed * 0.05f;
+                MiniHacks.MoveSpeed(_hackMoveSpeed);
+            }
+
+            ImGui.SameLine();
+            if (ImGui.Button("+10%"))
+            {
+                _hackMoveSpeed += _hackMoveSpeed * 0.10f;
+                MiniHacks.MoveSpeed(_hackMoveSpeed);
+            }
+
+            ImGui.SameLine();
+            if (ImGui.Button("+20%"))
+            {
+                _hackMoveSpeed += _hackMoveSpeed * 0.20f;
+                MiniHacks.MoveSpeed(_hackMoveSpeed);
+            }
+
+            ImGui.SameLine();
+            if (ImGui.Button("+30%"))
+            {
+                _hackMoveSpeed += _hackMoveSpeed * 0.30f;
+                MiniHacks.MoveSpeed(_hackMoveSpeed);
+            }
+
+            if (ImGui.Button("Set Legit looking Speed"))
+            {
+                _hackMoveSpeed = 1.020f;
+                MiniHacks.MoveSpeed(_hackMoveSpeed);
+            }
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Spacing();
             if (ImGui.Checkbox("Anti-Knockback", ref MiniHacks.EnableAntiKick))
             {
                 MiniHacks.SetAntiKick(MiniHacks.EnableAntiKick);
