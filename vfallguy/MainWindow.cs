@@ -26,6 +26,7 @@ public class MainWindow : Window, IDisposable
     private bool _showAOEs;
     private bool _showAOEText;
     private bool _showPathfind;
+    private bool _enableMovementHacks;
     private DateTime _autoJoinAt = DateTime.MaxValue;
     private DateTime _autoLeaveAt = DateTime.MaxValue;
     private int _numPlayersInDuty;
@@ -34,6 +35,7 @@ public class MainWindow : Window, IDisposable
     private float _hackMoveSpeed = 1;
     private int _autoLeaveLimit = 1;
     private bool _enableHacks = false;
+
     private readonly float step = 0.001f;
     private readonly float stepFast = 0.010f;
     private unsafe readonly Structs.PlayerController* playerController = (Structs.PlayerController*)Svc.SigScanner.GetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 3C 01 75 1E 48 8D 0D");
@@ -85,19 +87,22 @@ public class MainWindow : Window, IDisposable
 
     public unsafe override void Draw()
     {
-        //ImGui.TextColored(ImGuiColors.HealerGreen, "The vfallguy plug-in is open source and free. Please do not pay for it in any way. If someone around you buys it, please laugh at him.");
-        //ImGui.TextColored(ImGuiColors.DPSRed, "Xianyu Shop: Wen-Liang Ritual, reselling the original plug-in of vfailguy, remember to report it if you see it");
-        //ImGui.TextColored(ImGuiColors.HealerGreen, "If the enter function does not respond, please enter the book manually and then exit.");
-
+        // Queue and LeaveDuty buttons with the number of players in duty text
         if (ImGui.Button("Queue"))
             _automation.RegisterForDuty();
         ImGui.SameLine();
         if (ImGui.Button("LeaveDuty"))
             _automation.LeaveDuty();
         ImGui.SameLine();
-        ImGui.TextUnformatted($"Num players in duty: {_numPlayersInDuty} (autoleave: {(_autoLeaveAt == DateTime.MaxValue ? "never" : $"in {(_autoLeaveAt - _now).TotalSeconds:f1}s")})");
-        if (ImGui.CollapsingHeader("Functions"))
+        ImGui.TextWrapped($"Num players in duty: {_numPlayersInDuty} (autoleave: {(_autoLeaveAt == DateTime.MaxValue ? "never" : $"in {(_autoLeaveAt - _now).TotalSeconds:f1}s")})");
+
+        // Create a table with 2 columns
+        if (ImGui.BeginTable("SplitTable", 2, ImGuiTableFlags.Borders))
         {
+            // First column
+            ImGui.TableNextColumn();
+            ImGui.TextWrapped("Functions");
+            ImGui.Separator();
             ImGui.Checkbox("Auto register", ref _autoJoin);
             if (_autoJoin)
             {
@@ -117,101 +122,101 @@ public class MainWindow : Window, IDisposable
                 }
             }
             ImGui.Separator();
+
             ImGui.Checkbox("Show AOE zones", ref _showAOEs);
             ImGui.Checkbox("Show AOE debug text", ref _showAOEText);
             ImGui.Checkbox("Show proposed path", ref _showPathfind);
-        }
-        if (_map != null)
-        {
-            var strats = _map.Strats();
-            if (strats.Length > 0)
-                ImGui.TextUnformatted(strats);
-            ImGui.TextUnformatted($"pos: {_map.PlayerPos}");
-            ImGui.TextUnformatted($"Path: {_map.PathSkip}-{_map.Path.Count}");
-            ImGui.TextUnformatted($"Speed: {_movementSpeed}");
-
-            //foreach (var aoe in _map.AOEs.Where(aoe => aoe.NextActivation != default))
-            //{
-            //    var nextActivation = (aoe.NextActivation - _now).TotalSeconds;
-            //    using (ImRaii.PushColor(ImGuiCol.Text, nextActivation < 0 ? 0xff0000ff : 0xffffffff))
-            //        ImGui.TextUnformatted($"{aoe.Type} R{aoe.R1} @ {aoe.Origin}: activate in {nextActivation:f3}, repeat={aoe.Repeat}, seqd={aoe.SeqDelay}");
-            //}
-        }
-
-        if (ImGui.CollapsingHeader("Hacks (Do not use in multiplayer, proceed at your own risk!)"))
-        {
-            // Base Movement speed is 6
-            // Refferene: Sprint increases movement speed to 7.8 (+130%)
-
-            ImGui.TextColored(EasyColor.PinkLight, $"Current Movement Speed: {playerController->MoveControllerWalk.BaseMovementSpeed:F3}");
-
-            ImGui.SetNextItemWidth(150);
-            if (ImGui.InputFloat(" Multiplier", ref _hackMoveSpeed, step, stepFast, "%.3f", ImGuiInputTextFlags.None))
+            if (_map != null)
             {
-                if (_hackMoveSpeed > 5) _hackMoveSpeed = 5;
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("Set"))
-            {
-                MiniHacks.MoveSpeed(_hackMoveSpeed);
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("Reset"))
-            {
-                _hackMoveSpeed = 1;
-                MiniHacks.MoveSpeed(_hackMoveSpeed);
+                var strats = _map.Strats();
+                if (strats.Length > 0)
+                    ImGui.TextUnformatted(strats);
+                ImGui.TextUnformatted($"pos: {_map.PlayerPos}");
+                ImGui.TextUnformatted($"Path: {_map.PathSkip}-{_map.Path.Count}");
+                ImGui.TextUnformatted($"Speed: {_movementSpeed}");
+
+                //foreach (var aoe in _map.AOEs.Where(aoe => aoe.NextActivation != default))
+                //{
+                //    var nextActivation = (aoe.NextActivation - _now).TotalSeconds;
+                //    using (ImRaii.PushColor(ImGuiCol.Text, nextActivation < 0 ? 0xff0000ff : 0xffffffff))
+                //        ImGui.TextUnformatted($"{aoe.Type} R{aoe.R1} @ {aoe.Origin}: activate in {nextActivation:f3}, repeat={aoe.Repeat}, seqd={aoe.SeqDelay}");
+                //}
             }
 
-            ImGui.TextWrapped($"Game Movement Speed: {_hackMoveSpeed * 6:F3}");
-
-            if (ImGui.Button("+1%"))
-            {
-                _hackMoveSpeed += _hackMoveSpeed * 0.01f;
-                MiniHacks.MoveSpeed(_hackMoveSpeed);
-            }
-
-            ImGui.SameLine();
-            if (ImGui.Button("+5%"))
-            {
-                _hackMoveSpeed += _hackMoveSpeed * 0.05f;
-                MiniHacks.MoveSpeed(_hackMoveSpeed);
-            }
-
-            ImGui.SameLine();
-            if (ImGui.Button("+10%"))
-            {
-                _hackMoveSpeed += _hackMoveSpeed * 0.10f;
-                MiniHacks.MoveSpeed(_hackMoveSpeed);
-            }
-
-            ImGui.SameLine();
-            if (ImGui.Button("+20%"))
-            {
-                _hackMoveSpeed += _hackMoveSpeed * 0.20f;
-                MiniHacks.MoveSpeed(_hackMoveSpeed);
-            }
-
-            ImGui.SameLine();
-            if (ImGui.Button("+30%"))
-            {
-                _hackMoveSpeed += _hackMoveSpeed * 0.30f;
-                MiniHacks.MoveSpeed(_hackMoveSpeed);
-            }
-
-            if (ImGui.Button("Set Legit looking Speed"))
-            {
-                _hackMoveSpeed = 1.020f;
-                MiniHacks.MoveSpeed(_hackMoveSpeed);
-            }
-
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.Spacing();
+            // Second column
+            ImGui.TableNextColumn();
+            ImGui.TextWrapped("Hacks (Use at your own risk!)");
+            ImGui.Separator();
             if (ImGui.Checkbox("Anti-Knockback", ref MiniHacks.EnableAntiKick))
             {
                 MiniHacks.SetAntiKick(MiniHacks.EnableAntiKick);
             }
+
+            ImGui.Checkbox("Movement Speed Options", ref _enableMovementHacks);
+            if (_enableMovementHacks)
+            {
+                ImGui.TextColored(EasyColor.PinkLight, $"Current Movement Speed: {_movementSpeed}");
+                ImGui.TextWrapped($"Game Movement Speed: {_hackMoveSpeed * 6:F3}");
+                ImGui.SetNextItemWidth(150);
+                if (ImGui.InputFloat(" Multiplier", ref _hackMoveSpeed, step, stepFast, "%.3f", ImGuiInputTextFlags.None))
+                {
+                    if (_hackMoveSpeed > 5) _hackMoveSpeed = 5;
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Set"))
+                {
+                    MiniHacks.MoveSpeed(_hackMoveSpeed);
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Reset"))
+                {
+                    _hackMoveSpeed = 1;
+                    MiniHacks.MoveSpeed(_hackMoveSpeed);
+                }
+
+                DrawMovementSpeedModButtons();
+
+                if (ImGui.Button("Set Legit looking Speed"))
+                {
+                    _hackMoveSpeed = 1.050f;
+                    MiniHacks.MoveSpeed(_hackMoveSpeed);
+                }
+
+                if (ImGui.Button("Set Peloton Speed"))
+                {
+                    _hackMoveSpeed = 1.200f;
+                    MiniHacks.MoveSpeed(_hackMoveSpeed);
+                }
+
+                if (ImGui.Button("Set Sprint Speed"))
+                {
+                    _hackMoveSpeed = 1.300f;
+                    MiniHacks.MoveSpeed(_hackMoveSpeed);
+                }
+            }
+
+            ImGui.Separator();
+            ImGui.EndTable();
         }
+
+        /*
+                if (_map != null)
+                {
+                    var strats = _map.Strats();
+                    if (strats.Length > 0)
+                        ImGui.TextUnformatted(strats);
+                    ImGui.TextUnformatted($"pos: {_map.PlayerPos}");
+                    ImGui.TextUnformatted($"Path: {_map.PathSkip}-{_map.Path.Count}");
+                    ImGui.TextUnformatted($"Speed: {_movementSpeed}");
+
+                    //foreach (var aoe in _map.AOEs.Where(aoe => aoe.NextActivation != default))
+                    //{
+                    //    var nextActivation = (aoe.NextActivation - _now).TotalSeconds;
+                    //    using (ImRaii.PushColor(ImGuiCol.Text, nextActivation < 0 ? 0xff0000ff : 0xffffffff))
+                    //        ImGui.TextUnformatted($"{aoe.Type} R{aoe.R1} @ {aoe.Origin}: activate in {nextActivation:f3}, repeat={aoe.Repeat}, seqd={aoe.SeqDelay}");
+                    //}
+                }
+        */
     }
 
     private void UpdateMap()
@@ -224,7 +229,7 @@ public class MainWindow : Window, IDisposable
         {
             if (Service.ClientState.TerritoryType == 1197)
             {
-                //mapType = typeof(MapTest);
+                mapType = typeof(MapTest);
             }
             else
             {
@@ -339,6 +344,46 @@ public class MainWindow : Window, IDisposable
                     var textPos = _map.PlayerPos + dir * MathF.Max(enter, 0);
                     _drawer.DrawWorldText(textPos, color, text);
                 }
+            }
+        }
+    }
+
+    private void DrawMovementSpeedModButtons()
+    {
+        float[] buttonValues = new float[] { 1f, 5f, 10f, 20f, 30f };
+        Vector4[] buttonColors = new Vector4[]
+    {
+        EasyColor.DalamudGrey2,
+        EasyColor.Green,
+        EasyColor.Yellow,
+        EasyColor.Orange,
+        EasyColor.Red
+    };
+
+        for (int i = 0; i < buttonValues.Length; i++)
+        {
+            float value = buttonValues[i];
+            float percentageValue = value / 100f; // Convert to percentage
+            Vector4 color = buttonColors[i % buttonColors.Length];
+
+            ImGui.PushStyleColor(ImGuiCol.Button, color);
+            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, color * new Vector4(1.2f, 1.2f, 1.2f, 1f));
+            ImGui.PushStyleColor(ImGuiCol.ButtonActive, color * new Vector4(0.8f, 0.8f, 0.8f, 1f));
+
+            if (ImGui.Button($"{value}%##{value}"))
+            {
+                _hackMoveSpeed *= 1 + percentageValue; // Increase by percentage
+            }
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                _hackMoveSpeed *= 1 - percentageValue; // Decrease by percentage
+            }
+
+            ImGui.PopStyleColor(3);
+
+            if (i < buttonValues.Length - 1)
+            {
+                ImGui.SameLine();
             }
         }
     }

@@ -30,6 +30,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Remove="Map1A.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="Map1A.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="DalamudPackager" Version="2.1.12" />
         <PackageReference Include="SharpDX.Mathematics" Version="4.2.0" />
         <Reference Include="FFXIVClientStructs">

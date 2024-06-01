@@ -1,3 +1,3 @@
-[submodule "vfallguy/ECommons"]
-	path = vfallguy/ECommons
+[submodule "ECommons"]
+	path = ECommons
 	url = https://github.com/NightmareXIV/ECommons.git

@@ -129,8 +129,8 @@ public class Map3 : Map
         _mech7PairL = CreatePairsSequence(3, new(-6.78f, 35.91f, 136.91f), new(-3.22f, 36.30f, 135.09f));
         _mech7PairR = CreatePairsSequence(3, new(6.78f, 35.91f, 136.91f), new(3.22f, 36.30f, 135.09f));
 
-        //foreach (var a in AOEs)
-        //    Service.Log.Info($"aoe: {a.Type} r={a.R1} @ {a.Origin}");
+        foreach (var a in AOEs)
+            Service.Log.Info($"aoe: {a.Type} r={a.R1} @ {a.Origin}");
     }
 
     public override string Strats()
