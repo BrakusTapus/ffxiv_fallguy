@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using vfallguy.Hooks;
 
-namespace vfallguy;
+namespace vfallguy.Maps;
 
 public class MapTest : Map
 {

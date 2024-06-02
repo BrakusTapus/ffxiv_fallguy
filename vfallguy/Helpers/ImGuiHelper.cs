@@ -220,6 +220,24 @@ public static unsafe partial class ImGuiHelper
     #endregion
 
     #region Checkbox
+
+	//public static void Checkbox(bool value, string name)
+	//{
+	//	if (!ImGui.Checkbox($"###{name}", ref value))
+	//	{
+	//		return;
+	//	}
+
+	//	if (!FallGuysPlugin.Instance.Configuration.SettingDictionary.TryGetValue(name,
+	//		    out Action<bool, bool, bool>? onValueChanged))
+	//	{
+	//		return;
+	//	}
+
+	//	onValueChanged(value, false, true);
+	//	FallGuysPlugin.Instance.Configuration.Save();
+	//}
+
     /// <summary>
     /// Creates a checkbox with a tooltip, returning whether the value was changed.
     /// </summary>

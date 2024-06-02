@@ -5,7 +5,7 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace vfallguy;
+namespace vfallguy.Helpers;
 
 public static class Geom
 {
@@ -118,7 +118,7 @@ public static class Geom
         // error = R * (1 - cos(phi/2)) => cos(phi/2) = 1 - error/R
         float tessAngle = 2 * MathF.Acos(1 - MathF.Min(maxError / radius, 1));
         int tessNumSegments = (int)MathF.Ceiling(angularLengthRad / tessAngle);
-        tessNumSegments = (tessNumSegments + 1) & ~1; // round up to even for symmetry
+        tessNumSegments = tessNumSegments + 1 & ~1; // round up to even for symmetry
         return Math.Clamp(tessNumSegments, 4, 512);
     }
 

@@ -3,8 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using vfallguy.Helpers;
+using vfallguy.Hooks;
 
-namespace vfallguy;
+namespace vfallguy.Maps;
 
 public class Map3 : Map
 {
@@ -224,7 +226,7 @@ public class Map3 : Map
         {
             var lowX = lane2 switch
             {
-                1 => mech3Left ? - 12 : 0,
+                1 => mech3Left ? -12 : 0,
                 4 => mech3Left ? 0 : 12,
                 _ => 0,
             };

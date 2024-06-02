@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using vfallguy.Gui;
+using vfallguy.Helpers;
+using vfallguy.Hooks;
 
-namespace vfallguy;
+namespace vfallguy.Maps;
 
 public class Map : IDisposable
 {

@@ -7,9 +7,14 @@ using ImGuiNET;
 using System;
 using System.Linq;
 using System.Numerics;
+using vfallguy.Configuration;
+using vfallguy.Functinos;
+using vfallguy.Hacks;
 using vfallguy.Helpers;
+using vfallguy.Hooks;
+using vfallguy.Maps;
 
-namespace vfallguy;
+namespace vfallguy.Gui;
 
 public class MainWindow : Window, IDisposable
 {
@@ -27,6 +32,7 @@ public class MainWindow : Window, IDisposable
     private bool _showAOEText;
     private bool _showPathfind;
     private bool _enableMovementHacks;
+    private bool _hidePlayers;
     private DateTime _autoJoinAt = DateTime.MaxValue;
     private DateTime _autoLeaveAt = DateTime.MaxValue;
     private int _numPlayersInDuty;
@@ -35,6 +41,7 @@ public class MainWindow : Window, IDisposable
     private float _hackMoveSpeed = 1;
     private int _autoLeaveLimit = 1;
     private bool _enableHacks = false;
+    private bool _showPlayersNameplate;
 
     private readonly float step = 0.001f;
     private readonly float stepFast = 0.010f;
@@ -97,7 +104,7 @@ public class MainWindow : Window, IDisposable
         ImGui.TextWrapped($"Num players in duty: {_numPlayersInDuty} (autoleave: {(_autoLeaveAt == DateTime.MaxValue ? "never" : $"in {(_autoLeaveAt - _now).TotalSeconds:f1}s")})");
 
         // Create a table with 2 columns
-        if (ImGui.BeginTable("SplitTable", 2, ImGuiTableFlags.Borders))
+        if (ImGui.BeginTable("SplitTable", 3, ImGuiTableFlags.Borders))
         {
             // First column
             ImGui.TableNextColumn();
@@ -123,26 +130,6 @@ public class MainWindow : Window, IDisposable
             }
             ImGui.Separator();
 
-            ImGui.Checkbox("Show AOE zones", ref _showAOEs);
-            ImGui.Checkbox("Show AOE debug text", ref _showAOEText);
-            ImGui.Checkbox("Show proposed path", ref _showPathfind);
-            if (_map != null)
-            {
-                var strats = _map.Strats();
-                if (strats.Length > 0)
-                    ImGui.TextUnformatted(strats);
-                ImGui.TextUnformatted($"pos: {_map.PlayerPos}");
-                ImGui.TextUnformatted($"Path: {_map.PathSkip}-{_map.Path.Count}");
-                ImGui.TextUnformatted($"Speed: {_movementSpeed}");
-
-                //foreach (var aoe in _map.AOEs.Where(aoe => aoe.NextActivation != default))
-                //{
-                //    var nextActivation = (aoe.NextActivation - _now).TotalSeconds;
-                //    using (ImRaii.PushColor(ImGuiCol.Text, nextActivation < 0 ? 0xff0000ff : 0xffffffff))
-                //        ImGui.TextUnformatted($"{aoe.Type} R{aoe.R1} @ {aoe.Origin}: activate in {nextActivation:f3}, repeat={aoe.Repeat}, seqd={aoe.SeqDelay}");
-                //}
-            }
-
             // Second column
             ImGui.TableNextColumn();
             ImGui.TextWrapped("Hacks (Use at your own risk!)");
@@ -151,7 +138,6 @@ public class MainWindow : Window, IDisposable
             {
                 MiniHacks.SetAntiKick(MiniHacks.EnableAntiKick);
             }
-
             ImGui.Checkbox("Movement Speed Options", ref _enableMovementHacks);
             if (_enableMovementHacks)
             {
@@ -176,47 +162,59 @@ public class MainWindow : Window, IDisposable
 
                 DrawMovementSpeedModButtons();
 
-                if (ImGui.Button("Set Legit looking Speed"))
+                if (ImGui.Button("Legit looking Speed"))
                 {
                     _hackMoveSpeed = 1.050f;
                     MiniHacks.MoveSpeed(_hackMoveSpeed);
                 }
 
-                if (ImGui.Button("Set Peloton Speed"))
+                if (ImGui.Button("Peloton Speed"))
                 {
                     _hackMoveSpeed = 1.200f;
                     MiniHacks.MoveSpeed(_hackMoveSpeed);
                 }
 
-                if (ImGui.Button("Set Sprint Speed"))
+                if (ImGui.Button("Sprint Speed"))
                 {
                     _hackMoveSpeed = 1.300f;
                     MiniHacks.MoveSpeed(_hackMoveSpeed);
                 }
             }
+            ImGui.Separator();
 
+            // Third column
+            ImGui.TableNextColumn();
+            ImGui.TextWrapped("Options");
+            ImGui.Separator();
+            ImGui.Checkbox("Show AOE zones", ref _showAOEs);
+            ImGui.Checkbox("Show AOE debug text", ref _showAOEText);
+            ImGui.Checkbox("Show proposed path", ref _showPathfind);
+            //var config = new VfallguyConfiguration();
+            //ImGui.Checkbox("Hide Other Players", ref config.HideOtherPlayers);
+            //if (ImGui.Checkbox("Hide Players", ref _hidePlayers))
+            //{
+            //    // code that hides players
+            //}
             ImGui.Separator();
             ImGui.EndTable();
+
+            if (_map != null)
+            {
+                var strats = _map.Strats();
+                if (strats.Length > 0)
+                    ImGui.TextUnformatted(strats);
+                ImGui.TextUnformatted($"pos: {_map.PlayerPos}");
+                ImGui.TextUnformatted($"Path: {_map.PathSkip}-{_map.Path.Count}");
+                ImGui.TextUnformatted($"Speed: {_movementSpeed}");
+
+                //foreach (var aoe in _map.AOEs.Where(aoe => aoe.NextActivation != default))
+                //{
+                //    var nextActivation = (aoe.NextActivation - _now).TotalSeconds;
+                //    using (ImRaii.PushColor(ImGuiCol.Text, nextActivation < 0 ? 0xff0000ff : 0xffffffff))
+                //        ImGui.TextUnformatted($"{aoe.Type} R{aoe.R1} @ {aoe.Origin}: activate in {nextActivation:f3}, repeat={aoe.Repeat}, seqd={aoe.SeqDelay}");
+                //}
+            }
         }
-
-        /*
-                if (_map != null)
-                {
-                    var strats = _map.Strats();
-                    if (strats.Length > 0)
-                        ImGui.TextUnformatted(strats);
-                    ImGui.TextUnformatted($"pos: {_map.PlayerPos}");
-                    ImGui.TextUnformatted($"Path: {_map.PathSkip}-{_map.Path.Count}");
-                    ImGui.TextUnformatted($"Speed: {_movementSpeed}");
-
-                    //foreach (var aoe in _map.AOEs.Where(aoe => aoe.NextActivation != default))
-                    //{
-                    //    var nextActivation = (aoe.NextActivation - _now).TotalSeconds;
-                    //    using (ImRaii.PushColor(ImGuiCol.Text, nextActivation < 0 ? 0xff0000ff : 0xffffffff))
-                    //        ImGui.TextUnformatted($"{aoe.Type} R{aoe.R1} @ {aoe.Origin}: activate in {nextActivation:f3}, repeat={aoe.Repeat}, seqd={aoe.SeqDelay}");
-                    //}
-                }
-        */
     }
 
     private void UpdateMap()
@@ -346,6 +344,11 @@ public class MainWindow : Window, IDisposable
                 }
             }
         }
+
+        //foreach ()
+        //{
+
+        //}
     }
 
     private void DrawMovementSpeedModButtons()
@@ -373,10 +376,12 @@ public class MainWindow : Window, IDisposable
             if (ImGui.Button($"{value}%##{value}"))
             {
                 _hackMoveSpeed *= 1 + percentageValue; // Increase by percentage
+                MiniHacks.MoveSpeed(_hackMoveSpeed);
             }
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
                 _hackMoveSpeed *= 1 - percentageValue; // Decrease by percentage
+                MiniHacks.MoveSpeed(_hackMoveSpeed);
             }
 
             ImGui.PopStyleColor(3);

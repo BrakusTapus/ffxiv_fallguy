@@ -4,7 +4,7 @@ using Dalamud;
 using Dalamud.Hooking;
 using ECommons.DalamudServices;
 
-namespace vfallguy;
+namespace vfallguy.Hacks;
 
 public unsafe class MiniHacks
 {
@@ -28,7 +28,7 @@ public unsafe class MiniHacks
     {
         if (antiKickHook == null)
         {
-             Service.ChatGui.Print($"antiKickHook is null!");
+            Service.ChatGui.Print($"antiKickHook is null!");
         }
         if (isenable)
         {
@@ -66,37 +66,37 @@ public unsafe class MiniHacks
         EnableAntiKick = false;
     }
 
-    private static Lazy<IntPtr> GetSpeedPtr = new(() =>
+    private static Lazy<nint> GetSpeedPtr = new(() =>
     {
         return Service.SigScanner.TryScanText(
             "f3 ?? ?? ?? ?? ?? ?? ?? e8 ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? 0f ?? ?? e8 ?? ?? ?? ?? f3 ?? ?? ?? ?? ?? ?? ?? f3 ?? ?? ?? ?? ?? ?? ?? f3 ?? ?? ?? f3",
             out var num)
             ? num
-            : IntPtr.Zero;
+            : nint.Zero;
     });
 
-    private delegate IntPtr SetSpeedDelegate(byte i);
+    private delegate nint SetSpeedDelegate(byte i);
     internal unsafe static void MoveSpeed(float speedBase)
     {
-        Service.ChatGui.Print($"Current move speed is {speedBase:F3}x\nIn game speed is {speedBase*6}");
-        
-                speedBase *= 6f;
+        Service.ChatGui.Print($"Current move speed is {speedBase:F3}x\nIn game speed is {speedBase * 6}");
+
+        speedBase *= 6f;
         SafeMemory.Write(
-            GetSpeedPtr.Value + new IntPtr(4) + Marshal.ReadInt32(GetSpeedPtr.Value + new IntPtr(4)) +
-            new IntPtr(4) + new IntPtr(20),
+            GetSpeedPtr.Value + new nint(4) + Marshal.ReadInt32(GetSpeedPtr.Value + new nint(4)) +
+            new nint(4) + new nint(20),
             speedBase);
         SetMoveControlData(speedBase);
     }
-    private static void SetMoveControlData(float speed) => SafeMemory.Write(setSpeed(1) + new IntPtr(8), speed);
+    private static void SetMoveControlData(float speed) => SafeMemory.Write(setSpeed(1) + new nint(8), speed);
 
-    private static IntPtr SetSpeedFunPtr
+    private static nint SetSpeedFunPtr
     {
         get
         {
             return Service.SigScanner.TryScanText("E8 ?? ?? ?? ?? 48 ?? ?? 74 ?? 83 ?? ?? 75 ?? 0F ?? ?? ?? 66",
                 out var num)
                 ? num
-                : IntPtr.Zero;
+                : nint.Zero;
         }
     }
 

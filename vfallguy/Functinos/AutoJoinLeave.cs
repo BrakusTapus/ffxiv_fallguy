@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace vfallguy;
+namespace vfallguy.Functinos;
 
 public unsafe class AutoJoinLeave : IDisposable
 {
@@ -82,7 +82,8 @@ public unsafe class AutoJoinLeave : IDisposable
 
     public void LeaveDuty()
     {
-        _actions.Add(() => {
+        _actions.Add(() =>
+        {
             if (!Service.Condition[ConditionFlag.BoundByDuty])
                 return true;
             Service.Log.Debug("leaving...");
@@ -90,7 +91,8 @@ public unsafe class AutoJoinLeave : IDisposable
             return true;
         });
 
-        _actions.Add(() => {
+        _actions.Add(() =>
+        {
             if (!Service.Condition[ConditionFlag.BoundByDuty])
                 return true;
             if (!Service.Condition[ConditionFlag.OccupiedInCutSceneEvent])

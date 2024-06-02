@@ -4,13 +4,14 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using vfallguy.Helpers;
 
-namespace vfallguy;
+namespace vfallguy.Gui;
 
 public unsafe class DebugDrawer
 {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate IntPtr GetMatrixSingletonDelegate();
+    private delegate nint GetMatrixSingletonDelegate();
 
     private GetMatrixSingletonDelegate _getMatrixSingleton { get; init; }
 
@@ -137,7 +138,7 @@ public unsafe class DebugDrawer
         return true;
     }
 
-    private unsafe SharpDX.Matrix ReadMatrix(IntPtr address)
+    private unsafe SharpDX.Matrix ReadMatrix(nint address)
     {
         var p = (float*)address;
         SharpDX.Matrix mtx = new();
@@ -146,7 +147,7 @@ public unsafe class DebugDrawer
         return mtx;
     }
 
-    private unsafe SharpDX.Vector2 ReadVec2(IntPtr address)
+    private unsafe SharpDX.Vector2 ReadVec2(nint address)
     {
         var p = (float*)address;
         return new(p[0], p[1]);
